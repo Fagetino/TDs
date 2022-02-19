@@ -1,0 +1,22 @@
+INDEX VERSION 1.131+D:\Users\faget\eclipse-workspace\.metadata\.plugins\org.eclipse.jdt.core
+3413987029.index
+2286330348.index
+3279056806.index
+1397971824.index
+1791017412.index
+1480631358.index
+2986436680.index
+204892936.index
+2243782039.index
+2136787003.index
+781789333.index
+249652049.index
+2071557819.index
+1846442266.index
+306674404.index
+1734714263.index
+172064613.index
+3675509506.index
+3773760125.index
+1192509721.index
+2078167621.index

@@ -1,0 +1,330 @@
+import javax.swing.JFrame;
+import java.awt.BorderLayout;
+import javax.swing.JPanel;
+import java.awt.FlowLayout;
+import javax.swing.JTextField;
+import javax.swing.JLabel;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.Serializable;
+
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import java.awt.Font;
+import java.awt.Color;
+import javax.swing.SwingConstants;
+
+public class Chronometre extends JFrame {
+	private JTextField minutes;
+	private JTextField secondes;
+	private JTextField tempsIntermediaire;
+	private JButton start, stop, capture, reset;
+	private JComboBox<String> mode;
+	private JLabel unite1, unite2;
+	private Start s;
+	private File fichierSauvegarde;
+	
+	public Chronometre() {
+		super("Chronomètre");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		getContentPane().setLayout(new BorderLayout(0, 0));
+		
+		fichierSauvegarde = new File("chronometre.ser");
+		
+		JPanel panel = new JPanel();
+		getContentPane().add(panel, BorderLayout.CENTER);
+		FlowLayout fl_panel = new FlowLayout(FlowLayout.CENTER, 10, 15);
+		panel.setLayout(fl_panel);
+		
+		
+		minutes = new JTextField();
+		minutes.setToolTipText("Minutes ou secondes");
+		minutes.setHorizontalAlignment(SwingConstants.CENTER);
+		minutes.setText("00");
+		minutes.setForeground(Color.RED);
+		minutes.setBackground(Color.WHITE);
+		minutes.setFont(new Font("Tahoma", Font.PLAIN, 36));
+		minutes.setEditable(false);
+		panel.add(minutes);
+		minutes.setColumns(2);
+		
+		unite1 = new JLabel("Min");
+		panel.add(unite1);
+		
+		secondes = new JTextField();
+		secondes.setToolTipText("Secondes ou 1/100 de seconde");
+		secondes.setText("00");
+		secondes.setHorizontalAlignment(SwingConstants.CENTER);
+		secondes.setForeground(Color.RED);
+		secondes.setBackground(Color.WHITE);
+		secondes.setEditable(false);
+		secondes.setFont(new Font("Tahoma", Font.PLAIN, 36));
+		panel.add(secondes);
+		secondes.setColumns(2);
+		
+		unite2 = new JLabel("Sec");
+		panel.add(unite2);
+		
+		JPanel panel_1 = new JPanel();
+		getContentPane().add(panel_1, BorderLayout.EAST);
+		panel_1.setLayout(new GridLayout(3, 1, 1, 4));
+		
+		start = new JButton("Start");
+		start.setToolTipText("Lancer le chronomètre");
+		start.addActionListener(new ActionStart());
+		panel_1.add(start);
+		
+		stop = new JButton("Stop");
+		stop.setToolTipText("Arrêter la chronomètre");
+		stop.addActionListener(new ActionStop());
+		stop.setEnabled(false);
+		panel_1.add(stop);
+		
+		reset = new JButton("Reset");
+		reset.setToolTipText("Remise \u00E0 z\u00E9ro du chronom\u00E8tre");
+		reset.addActionListener(new ActionReset());
+		panel_1.add(reset);
+		
+		JPanel panel_2 = new JPanel();
+		getContentPane().add(panel_2, BorderLayout.SOUTH);
+		
+		FlowLayout fl_panel_2 = new FlowLayout(FlowLayout.CENTER, 10, 5);
+		panel_2.setLayout(fl_panel_2);
+		
+		tempsIntermediaire = new JTextField();
+		tempsIntermediaire.setToolTipText("Temps interm\u00E9diaire");
+		tempsIntermediaire.setText("00:00");
+		tempsIntermediaire.setHorizontalAlignment(SwingConstants.CENTER);
+		tempsIntermediaire.setBackground(Color.WHITE);
+		tempsIntermediaire.setEditable(false);
+		tempsIntermediaire.setFont(new Font("Tahoma", Font.PLAIN, 20));
+		panel_2.add(tempsIntermediaire);
+		tempsIntermediaire.setColumns(5);
+		
+		capture = new JButton("Capture");
+		capture.setToolTipText("Capture du temps interm\u00E9diaire");
+		capture.addActionListener(new ActionCapture());
+		panel_2.add(capture);
+		
+		mode = new JComboBox<String>();
+		mode.setToolTipText("Choix du mode (min:sec ou sec:1/100)");
+		mode.setFont(new Font("Tahoma", Font.ITALIC, 13));
+		mode.addItem("Min:Sec");
+		mode.addItem("Sec:1/100");
+		mode.addActionListener(new ActionMode());
+		panel_2.add(mode);
+		
+		s = new Start();
+		
+		pack();
+		setVisible(true);
+		
+		this.addWindowListener(new ActionClose());
+		
+	}
+	
+	private class ActionClose extends WindowAdapter{
+		public void windowClosing(WindowEvent e) {
+		}
+	}
+	
+	
+	private class ActionStart implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			stop.setEnabled(true);
+			start.setEnabled(false);
+			mode.setEnabled(false);
+			s.continuer();
+			new Thread(s).start();
+		}
+	}
+	
+		
+	private class ActionStop implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			start.setEnabled(true);
+			mode.setEnabled(true);
+			stop.setEnabled(false);
+			
+			s.arreter();
+		}
+		
+	}
+	
+	private class Start implements Runnable{
+		private boolean running;
+		public Start() {
+			
+		}
+		public void run() {
+			while(running) {
+				int sec=0;
+				int min=0;
+				int limite=0;
+				
+				switch(mode.getSelectedIndex()) {
+				case 0:
+					limite=60;
+					break;
+				case 1:
+					limite=100;
+					break;
+				}
+				
+				try {
+					sec = Integer.parseInt(secondes.getText());
+				} catch(NumberFormatException nfem) {
+					sec=-1;
+				}
+				sec++;
+				
+				
+				if(sec==limite) {
+					try {
+						min = Integer.parseInt(minutes.getText());
+					} catch(NumberFormatException nfem) {
+						min=-1;
+					}
+					min++;
+					if(min<10) {
+						minutes.setText('0'+String.valueOf(min));
+					}else {
+						minutes.setText(String.valueOf(min));
+					}
+					secondes.setText("00");
+					
+				} else {
+					if(sec<10) {
+						secondes.setText('0'+String.valueOf(sec));
+					} else {
+						secondes.setText(String.valueOf(sec));
+					}
+					
+				}
+				try {
+					switch(mode.getSelectedIndex()) {
+					case 0:
+						Thread.sleep(1000);
+						break;
+					case 1:
+						Thread.sleep(1);
+						break;
+					}
+					
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		public void arreter() {
+			running=false;
+		}
+		
+		public void continuer() {
+			running=true;
+		}
+	}
+		
+	private class ActionCapture implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			String sec=secondes.getText();
+			String min=minutes.getText();
+			tempsIntermediaire.setText(min+':'+sec);
+		}
+	}
+	
+	private class ActionReset implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			minutes.setText("00");
+			secondes.setText("00");
+			tempsIntermediaire.setText("00:00");
+		}
+	}
+	
+	private class ActionMode implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			minutes.setText("00");
+			secondes.setText("00");
+			switch(mode.getSelectedIndex()) {
+			case 0:
+				unite1.setText("Min");
+				unite2.setText("Sec");
+				break;
+			case 1:
+				unite1.setText("Sec");
+				unite2.setText("1/100");
+				break;
+			}
+		}
+	}
+	
+	private class EtatChronometre implements Serializable{
+		String mesure1;
+		String mesure2;
+		String mesureIntermediaire;
+		int vitesse;
+		
+		public EtatChronometre() {
+			mesure1 = minutes.getText();
+			mesure2 = secondes.getText();
+			mesureIntermediaire = tempsIntermediaire.getText();
+			vitesse = mode.getSelectedIndex();
+		}
+		
+		public String getMesure1() {
+			return mesure1;
+		}
+
+		public void setMesure1(String mesure1) {
+			this.mesure1 = mesure1;
+		}
+
+		public String getMesure2() {
+			return mesure2;
+		}
+
+		public void setMesure2(String mesure2) {
+			this.mesure2 = mesure2;
+		}
+
+		public String getMesureIntermediaire() {
+			return mesureIntermediaire;
+		}
+
+		public void setMesureIntermediaire(String mesureIntermediaire) {
+			this.mesureIntermediaire = mesureIntermediaire;
+		}
+
+		public int getVitesse() {
+			return vitesse;
+		}
+
+		public void setVitesse(int vitesse) {
+			this.vitesse = vitesse;
+		}
+	}
+	
+	/**
+	* @param args
+	*/
+	public static void main(String[] args) {
+	// TODO Auto-generated method stub
+	new Chronometre();
+	}
+}

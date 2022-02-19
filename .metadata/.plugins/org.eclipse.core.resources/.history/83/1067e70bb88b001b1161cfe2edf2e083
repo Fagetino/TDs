@@ -1,0 +1,43 @@
+import java.io.Serializable;
+
+class EtatChronometre implements Serializable{
+	private static final long serialVersionUID = 1L;
+	String mesure1;
+	String mesure2;
+	String mesureIntermediaire;
+	boolean minsec;
+		
+	public EtatChronometre(String m1, String m2, String mi, boolean mode) {
+		mesure1 = m1;
+		mesure2 = m2;
+		mesureIntermediaire = mi;
+		minsec = mode;
+	}
+	
+	public String getMesure1() {
+		return mesure1;
+	}
+	public void setMesure1(String mesure1) {
+		this.mesure1 = mesure1;
+	}
+	public String getMesure2() {
+		return mesure2;
+	}
+	public void setMesure2(String mesure2) {
+		this.mesure2 = mesure2;
+	}
+	public String getMesureIntermediaire() {
+		return mesureIntermediaire;
+	}
+	public void setMesureIntermediaire(String mesureIntermediaire) {
+		this.mesureIntermediaire = mesureIntermediaire;
+	}
+
+	public boolean isMinsec() {
+		return minsec;
+	}
+
+	public void setMinsec(boolean minsec) {
+		this.minsec = minsec;
+	}
+}
